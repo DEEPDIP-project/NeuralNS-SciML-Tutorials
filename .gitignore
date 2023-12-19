@@ -1,0 +1,13 @@
+*Manifest.toml
+
+# Vim swap
+*.swp
+
+# Mac OS
+*.DS_Store
+
+# vscode
+.vscode
+
+# Large datafiles
+data/*
