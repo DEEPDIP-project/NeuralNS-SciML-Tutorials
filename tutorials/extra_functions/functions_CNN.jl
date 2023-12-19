@@ -6,6 +6,7 @@ function create_cnn_model(r_cnn, ch_cnn, σ_cnn, b_cnn; single_timestep = false)
         ## Go to physical space
         u -> real.(ifft(u, (1, 2))),
         ## Add padding so that output has same shape as commutator error
+        u -> single_timestep ? reshape(u, (size(u)...,1)) : u,
         u -> pad_circular(u, sum(r_cnn)),
         ## Some convolutional layers
         (

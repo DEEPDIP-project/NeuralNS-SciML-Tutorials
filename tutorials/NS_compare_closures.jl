@@ -66,6 +66,8 @@ model_list = [
     "FNO__2-5-5-5-2__8-8-8-8__gelu-gelu-gelu-identity_lossPrior-nu50",
     "FNO__2-5-5-5-2__8-8-8-8__gelu-gelu-gelu-identity_lossDtO-nu20",
     "FNO__2-5-5-5-2__8-8-8-8__gelu-gelu-gelu-identity_lossDtO-nu10",
+    "CNN__2-2-2__2-8-8-2__leakyrelu-leakyrelu-identity__true-true-false_lossDtO-nu10",
+    "CNN__2-2-2__2-8-8-2__leakyrelu-leakyrelu-identity__true-true-false_lossPrior-nu50"
 ]
 
 

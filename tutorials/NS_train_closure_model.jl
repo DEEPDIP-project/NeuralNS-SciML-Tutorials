@@ -53,7 +53,7 @@ if isfile("data/$(data_name).jld2")
     println("Loading data from file")
     simulation_data = load("data/$(data_name).jld2","data")
 else
-    throw(DomainError("Data are missing."))
+    throw(DomainError("Data are missing. You may want to generate them first."))
 end
 
 
@@ -69,17 +69,17 @@ kmax_fno = [8, 8, 8, 8]
 # We will identity this architecture with the name 
 model_name = generate_FNO_name(ch_fno, kmax_fno, σ_fno)
 
-## If you want to use a CNN instead, you can use the following:
-## 1) radii of the convolutional layers
-#r_cnn = [2, 2, 2, 2]
-## 2) Number of channels (where the 2-ch at start and end are for the real and imaginary parts)
-#ch_cnn = [2, 8, 8, 8, 2]
-## 3) Activations
-#σ_cnn = [leakyrelu, leakyrelu, leakyrelu, identity]
-## 4) Bias (use or not)
-#b_cnn = [true, true, true, false]
-## and get the corresponding name
-#model_name = generate_CNN_name(r_cnn, ch_cnn, σ_cnn, b_cnn)
+# If you want to use a CNN instead, you can use the following:
+# 1) radii of the convolutional layers
+r_cnn = [2, 2, 2]
+# 2) Number of channels (where the 2-ch at start and end are for the real and imaginary parts)
+ch_cnn = [2, 8, 8, 2]
+# 3) Activations
+σ_cnn = [leakyrelu, leakyrelu, identity]
+# 4) Bias (use or not)
+b_cnn = [true, true, false]
+# and get the corresponding name
+model_name = generate_CNN_name(r_cnn, ch_cnn, σ_cnn, b_cnn)
 
 # Then decide which type of loss function you want between:
 # 1) Random derivative (a priori) loss function
@@ -88,7 +88,7 @@ nuse = 50
 loss_name = "lossPrior-nu$(nuse)"
 # 2) Random trajectory (a posteriori) loss function (DtO)
 # for which we need to specify how many steps to unroll per epoch
-nunroll = 20
+nunroll = 10
 loss_name = "lossDtO-nu$(nunroll)"
 # 3) DtO multishooting
 # for which we also need to specify how many consecutive intervals
@@ -109,7 +109,7 @@ end
 ## Here we define the closure model
 # (for DtO we need single_timestep=true, for derivative fitting we need single_timestep=false)
 _closure = create_cnn_model(r_cnn, ch_cnn, σ_cnn, b_cnn; single_timestep=true)
-_closure = create_fno_model(kmax_fno, ch_fno, σ_fno; single_timestep=false)
+_closure = create_fno_model(kmax_fno, ch_fno, σ_fno; single_timestep=true)
 
 # then we set the NeuralODE model
 _model = create_node(_closure, simulation_data.params_les; is_closed=true)
@@ -146,7 +146,7 @@ callback = function (p, l, pred; doplot = true)
 end
 
 # Initialize and trigger the compilation of the model
-pinit = ComponentArray(θ)
+pinit = ComponentArray(θ);
 callback(pinit, randloss(pinit)...)
 
 
@@ -161,7 +161,7 @@ ClipAdam = OptimiserChain(Adam(1.0f-2), ClipGrad(1));
 result_neuralode = Optimization.solve(optprob,
     ClipAdam;
     callback = callback,
-    maxiters = 100)
+    maxiters = 10)
 
 # You can continue the training from here
 pinit = result_neuralode.u

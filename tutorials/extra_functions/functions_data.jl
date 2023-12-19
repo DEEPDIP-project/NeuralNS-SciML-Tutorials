@@ -32,13 +32,13 @@ function _get_closure(model::TrainedNODE)
         ch_fno = parse.(Int, split(parts[2], "-"))
         kmax_fno = parse.(Int, split(parts[3], "-"))
         σ_fno = [eval(Symbol(name)) for name in split(parts[4], "-")]
-        return create_fno_model(kmax_fno, ch_fno, σ_fno; single_timestep=false)
+        return create_fno_model(kmax_fno, ch_fno, σ_fno; single_timestep=true)
     elseif name == "CNN"
         r_cnn = parse.(Int, split(parts[2], "-"))
         ch_cnn = parse.(Int, split(parts[3], "-"))
         σ_cnn = [eval(Symbol(name)) for name in split(parts[4], "-")]
         b_cnn = parse.(Bool, split(parts[5], "-"))
-        return create_cnn_model(r_cnn, ch_cnn, σ_cnn, b_cnn; single_timestep=false)
+        return create_cnn_model(r_cnn, ch_cnn, σ_cnn, b_cnn; single_timestep=true)
     else
         throw(DomainError("The model name is not recognized."))
     end

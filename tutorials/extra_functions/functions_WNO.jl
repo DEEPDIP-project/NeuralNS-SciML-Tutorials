@@ -33,9 +33,9 @@ Lux.statelength(::WaveletLayer) = 0
 
 function ((; nwmax, cout, cin, σ)::WaveletLayer)(x, params, state)
 
-    ## TBD 
-    ## TBD 
-    ## TBD 
+    ## TBD ******************* 
+    ## The model has not been implemented yet. This is just a placeholder. 
+    ## TBD ******************* 
     #N = size(x, 1)
 
     ### Destructure params

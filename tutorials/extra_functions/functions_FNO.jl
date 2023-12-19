@@ -103,7 +103,6 @@ end
 function create_fno_model(kmax_fno, ch_fno, σ_fno; single_timestep = false)
     return Chain(
         u -> real.(ifft(u, (1, 2))),
-        # Raise an error if u has less than 4 dimensions
         (
             FourierLayer(kmax_fno[i], ch_fno[i] => ch_fno[i+1]; σ = σ_fno[i]) for
             i ∈ eachindex(σ_fno)
