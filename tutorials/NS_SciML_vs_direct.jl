@@ -16,13 +16,13 @@ using SciMLSensitivity
 using DiffEqFlux
 using OptimizationOptimisers
 
-include("extra_functions/functions_force.jl")
-include("extra_functions/functions_time.jl")
-include("extra_functions/functions_plotting.jl")
-include("extra_functions/functions_utils.jl")
-include("extra_functions/functions_initialization.jl")
-include("extra_functions/functions_params.jl")
-include("extra_functions/functions_NODE.jl")
+include("NS_functions/functions_force.jl")
+include("NS_functions/functions_time.jl")
+include("NS_functions/functions_plotting.jl")
+include("NS_functions/functions_utils.jl")
+include("NS_functions/functions_initialization.jl")
+include("NS_functions/functions_params.jl")
+include("NS_functions/functions_NODE.jl")
 
 
 # Lux likes to toss random number generators around, for reproducible science
