@@ -13,7 +13,7 @@ function compute_overlap_matrix(modes)
 end
 
 function add_filter_to_modes(POD_modes,MP;orthogonalize = false)
-
+    # Get info from mesh pair
     dims = MP.fine_mesh.dims
     UPC = MP.fine_mesh.UPC
     sqrt_omega_tilde = sqrt.(MP.omega_tilde)
@@ -30,7 +30,8 @@ function add_filter_to_modes(POD_modes,MP;orthogonalize = false)
     for i in 2:r
         s_i = [[(:) for k in 1:dims+1]...,i:i]
         mode_i = modes[s_i...]
-        if orthogonalize ### orthogonalize basis using gramm-schmidt
+        if orthogonalize
+            # Optionally, orthogonalize modes using gramm-schmidt
             for j in 1:(i-1)
                 s_j = [[(:) for k in 1:dims+1]...,j:j]
                 mode_j = modes[s_j...]
@@ -39,6 +40,7 @@ function add_filter_to_modes(POD_modes,MP;orthogonalize = false)
             end
             mode_i = modes[s_i...]
         end
+        # Normalize the modes
         norm_i =  sum(MP.one_reconstructor(1/(prod(MP.fine_mesh.N))*MP.one_filter(mode_i .* mode_i)),dims = collect(1:dims+1))
         modes[s_i...] ./= sqrt.(norm_i)
     end

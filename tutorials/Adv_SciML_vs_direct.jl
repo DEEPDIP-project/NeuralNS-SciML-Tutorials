@@ -12,6 +12,9 @@ using DiffEqFlux
 using Statistics
 using Random
 using LaTeXStrings
+using Zygote
+stop_gradient(f) = f()
+Zygote.@nograd stop_gradient
 
 include("Adv_functions/bc.jl")
 include("Adv_functions/utils.jl")
@@ -81,12 +84,12 @@ fig = plot(layout = (1, 2), size = (800, 400))
 @gif for (idx,(t, u)) in enumerate(zip(sol.t, sol.u))
     dir = sim_data[:,:,1,1,idx]
     sci = u[:,:,1,1]
-    title1 = @sprintf("Vorticity, SciML, t = %.3f", t)
-    title2 = @sprintf("Vorticity, Direct, t = %.3f", t)
+    title1 = @sprintf("SciML, t = %.3f", t)
+    title2 = @sprintf("Direct, t = %.3f", t)
     p1 = heatmap(sci; xlabel = "x", ylabel = "y", titlefontsize=11, title=title1)
     p2 = heatmap(dir; xlabel = "x", ylabel = "y", titlefontsize=11, title=title2)
     #plot!(p1, p2)
     fig = plot(p1, p2)
     frame(anim, fig)
 end 
-gif(anim, "plots/NS_SciML_vs_direct.gif", fps=10)
+gif(anim, "plots/Adv_SciML_vs_direct.gif", fps=10)

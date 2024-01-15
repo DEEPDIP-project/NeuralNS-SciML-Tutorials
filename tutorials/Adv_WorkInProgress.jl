@@ -31,17 +31,17 @@ using Zygote
 stop_gradient(f) = f()
 Zygote.@nograd stop_gradient
 
-include("../extra_functions/bc.jl")
-include("../extra_functions/utils.jl")
-include("../extra_functions/mesh.jl")
-include("../extra_functions/rhs.jl")
-include("../extra_functions/initialization.jl")
-include("../extra_functions/svd.jl")
-include("../extra_functions/pod.jl")
-include("../extra_functions/cnn.jl")
-include("../extra_functions/nn.jl")
-include("../extra_functions/time_integration.jl")
-include("../extra_functions/loss.jl")
+include("Adv_functions/bc.jl")
+include("Adv_functions/utils.jl")
+include("Adv_functions/mesh.jl")
+include("Adv_functions/rhs.jl")
+include("Adv_functions/initialization.jl")
+include("Adv_functions/svd.jl")
+include("Adv_functions/pod.jl")
+include("Adv_functions/cnn.jl")
+include("Adv_functions/nn.jl")
+include("Adv_functions/time_integration.jl")
+include("Adv_functions/loss.jl")
 
 
 # Construct the grid
@@ -122,16 +122,20 @@ end
 
 # Finally generate the projection operator
 PO = gen_projection_operators(global_POD_modes,MP,uniform =false)
-
+# In the heatmap you can visually check if the modes are orthogonal
 heatmap(compute_overlap_matrix(global_POD_modes))
 
 
 # ** Generate reference data **
-# using the POD projection operator
+# Use the projection operator on the rhs of the data on the fine mesh
 ref_rhs_data = PO.W(rhs(data,fine_mesh,0))
+# also project the data itself
 ref_data = PO.W(data)
+# Then compute the energy on the fine mesh
 E_ref = fine_mesh.ip(data,data)[1:end]
+# and the energy on the coarse mesh, using the projection operator
 E_pod = coarse_mesh.ip(ref_data,ref_data,combine_channels = true)[1:end]
+# This final coefficient will tend to 1 if the projection operator is orthonormal and the magnitude of data is preserved when projected onto the coarse mesh
 mean(E_pod ./ E_ref)
 
 
@@ -149,28 +153,35 @@ conserve_momentum =true
 model = gen_skew_NN(kernel_sizes,channels,strides,r,B,boundary_padding = boundary_padding,UPC = coarse_mesh.UPC,constrain_energy = constrain_energy,dissipation = dissipation,conserve_momentum = conserve_momentum)
 
 
+# We check if the model is dissipative by plotting the energy of the rhs calculated using the NN
+plot(coarse_mesh.ip(ref_data,neural_rhs(ref_data,coarse_mesh,0))[1:end])
 
-plot(coarse_mesh.ip(ref_data,neural_rhs(ref_data,coarse_mesh,0))[1:end]) # check if model is dissipative
 
+# *******************************
+# ** Train the closure models **
+# We are going to compare Derivative fitting and Trajectory fitting
 
 # ** Derivative fitting **
 batchsize = 5
 derivative_fitting_data_loader = Flux.Data.DataLoader((ref_data,ref_rhs_data), batchsize=batchsize,shuffle=true)
-
+# precompile loss
 sqrt.(derivative_fitting_loss(ref_data,ref_rhs_data))
 
+# Use Adam as optimizer
 opt = ADAM()
 
-ps = Flux.params(model.CNN,model.B_mats...)
-#ps = Flux.params(model.CNN)
+# No need to get the parameters, you can pass model to Flux
+#ps = Flux.params(model.CNN,model.B_mats...)
 epochs =30
 losses = zeros(epochs)
 epoch = 0 
+# training loop
 for epoch in tqdm(1:epochs)
-    Flux.train!(derivative_fitting_loss,ps, derivative_fitting_data_loader, opt)
+    Flux.train!(derivative_fitting_loss,model, derivative_fitting_data_loader, opt)
     train_loss = derivative_fitting_loss(ref_data,ref_rhs_data)
     losses[epoch] = train_loss
 end
+
 
 plot(sqrt.(losses),xguidefontsize=14,yguidefontsize=14 ,dpi = 130, legend=:topright,legendfont=font(15),linewidth = 2)
 xlabel!("Iteration")

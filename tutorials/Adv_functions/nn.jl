@@ -81,7 +81,9 @@ struct skew_model_struct
     strides
 end
 
+
 function gen_skew_NN(kernel_sizes,channels,strides,r,B;UPC = 0,boundary_padding = 0,constrain_energy = true,conserve_momentum=true,dissipation = true)
+    # Adjust the input channels to account for the boundary padding
     if boundary_padding != 0 && boundary_padding != "c"
         add_input_channel = zeros(Int,size(channels)[1]+1)
         add_input_channel[1] += 1
@@ -94,6 +96,8 @@ function gen_skew_NN(kernel_sizes,channels,strides,r,B;UPC = 0,boundary_padding 
     else
        channels = [channels ; r]
     end
+
+    # Construct a CNN with the given parameters
     CNN = conv_NN(kernel_sizes,channels .+ add_input_channel,strides)
     pad_size = find_padding_size(CNN)
 
@@ -102,7 +106,7 @@ function gen_skew_NN(kernel_sizes,channels,strides,r,B;UPC = 0,boundary_padding 
     end
     dims = length(size(CNN[1].weight))-2
 
-
+    # Construct the B matrices, which are necessary for the energy conservation in the skew-symmetric form
     B1,B2,B3 = 0,0,0
     if constrain_energy
         B1 = Float64.(Flux.glorot_uniform(Tuple(2*[B...] .+1)...,r,r))
@@ -111,29 +115,18 @@ function gen_skew_NN(kernel_sizes,channels,strides,r,B;UPC = 0,boundary_padding 
             B3 = Float64.(Flux.glorot_uniform(Tuple(2*[B...] .+1)...,r,r))
         end
     end
-
-
+    # Adjust the padding size to account for the energy conservation
     if constrain_energy
         pad_size = [pad_size...]
         pad_size .+= [B...]
         pad_size = Tuple(pad_size)
     end
-
-
     B_mats = [B1,B2,B3]
 
-
+    # This nested function is the actual neural network that gets applied to the input
     function NN(input;a = 0,CNN = CNN,r = r,B = [B...],B_mats = B_mats,UPC = UPC,pad_size = pad_size,boundary_padding = boundary_padding,constrain_energy =constrain_energy,conserve_momentum = conserve_momentum,dissipation = dissipation)
 
         dims = length(size(input)) - 2
-        #CNN[1].weight .*= 4
-
-        #a = input[[(:) for i in 1:dims]...,1:r,:]
-        #if constrain_energy
-        #    input = input[[(2*B[i]+1:end - 2*B[i]) for i in dims]...,:,:]
-        #end
-        ### deal with BCs in the CNN #######
-        ####################################
 
         if boundary_padding == 0 || boundary_padding == "c"
             output = CNN(padding(input,pad_size,circular = true))
@@ -156,12 +149,8 @@ function gen_skew_NN(kernel_sizes,channels,strides,r,B;UPC = 0,boundary_padding 
             pad_boundary_indicator_channel = padding(boundary_indicator_channel,pad_size,BCs = boundary_indicator_padding)
             output = CNN(cat([pad_input,pad_boundary_indicator_channel]...,dims = dims + 1))
         end
-        #############################
-        ##############################
 
         phi = output[[(:) for i in 1:dims]...,1:r,:]
-
-
         psi = 0
         if constrain_energy && dissipation
             psi = output[[(:) for i in 1:dims]...,r+1:2*r,:]
@@ -170,11 +159,8 @@ function gen_skew_NN(kernel_sizes,channels,strides,r,B;UPC = 0,boundary_padding 
             psi = 0
         end
 
-
+        # Adjust the B matrices to account for the momentum conservation
         B1,B2,B3 = B_mats
-
-
-
         if conserve_momentum && constrain_energy
             B1 = cons_mom_B(B1)
             B2 = cons_mom_B(B2)
@@ -182,32 +168,26 @@ function gen_skew_NN(kernel_sizes,channels,strides,r,B;UPC = 0,boundary_padding 
         end
         B1_T,B2_T,B3_T = 0,0,0
         if constrain_energy
-
             B1_T = transpose_B(B1)
-
             B2_T = transpose_B(B2)
             B3_T = transpose_B(B3)
         else
             B1_T,B2_T,B3_T = 0,0,0
         end
 
+        # Construct the skew-symmetric form
         c_tilde = 0
-        if constrain_energy # skew_symmetric_form
+        if constrain_energy 
             c_tilde = NNlib.conv(NNlib.conv(a,B1) .* phi,B2_T) - NNlib.conv(NNlib.conv(a,B2) .* phi,B1_T)
             if dissipation
                 c_tilde -=  NNlib.conv(psi.^2 .* NNlib.conv(a,B3),B3_T)
             end
         else
-
             c_tilde = phi
-
         end
 
-        #c_tilde = phi
         return  c_tilde
     end
-
-
 
     return skew_model_struct(NN,CNN,r,B,B_mats,UPC,pad_size,boundary_padding,constrain_energy,conserve_momentum,dissipation,kernel_sizes,channels,strides)
 end
@@ -243,15 +223,15 @@ function load_skew_model(name)
 end
 
 
-function neural_rhs(a,coarse_mesh,t,rhs = rhs,model = model,B=B;other_arguments = 0)
+# Use the NN model to calculate the rhs of the PDE 
+function neural_rhs(data,coarse_mesh,t,rhs = rhs,model = model,B=B;other_arguments = 0)
     dims = coarse_mesh.dims
-    coarse_rhs = rhs(a[[(:) for i in 1:dims]...,1:1,:],coarse_mesh,t)
-    input = cat(a,coarse_rhs,dims = dims + 1)
+    coarse_rhs = rhs(data[[(:) for i in 1:dims]...,1:1,:],coarse_mesh,t)
+    input = cat(data,coarse_rhs,dims = dims + 1)
     
-    nn_output = model.eval(input,a = padding(a,((2*[B...])...,),circular = true)) #+ channel_mask .* coarse_rhs
+    nn_output = model.eval(input,data = padding(data,((2*[B...])...,),circular = true)) #+ channel_mask .* coarse_rhs
     
     channel_mask = gen_channel_mask(nn_output,1)
 
-    #return  PO.W(rhs(PO.R(a),fine_mesh,t)) #+ channel_mask .* coarse_rhs  + (1 ./ coarse_mesh.omega) .* nn_output 
     return (1 ./ coarse_mesh.omega) .* nn_output +  channel_mask .* coarse_rhs    
 end

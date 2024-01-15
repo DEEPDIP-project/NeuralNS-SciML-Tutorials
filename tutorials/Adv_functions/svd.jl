@@ -61,6 +61,7 @@ function carry_out_local_SVD(input,MP;subtract_average = false)
 end
 
 
+# Transform a set of modes from local representation to global
 function local_to_global_modes(modes,MP)
     number_of_modes = size(modes)[end]
     UPC = MP.coarse_mesh.UPC
@@ -87,6 +88,5 @@ function local_to_global_modes(modes,MP)
     end
 
     to_reconstruct = reshape(output,(I..., prod(J)*UPC,number_of_modes))
-
     return reshape(reconstruct_signal(to_reconstruct,J),(([I...] .* [J...])...,UPC,number_of_modes))
 end
