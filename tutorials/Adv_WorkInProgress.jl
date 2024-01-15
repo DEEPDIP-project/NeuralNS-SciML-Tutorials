@@ -182,6 +182,11 @@ for epoch in tqdm(1:epochs)
     losses[epoch] = train_loss
 end
 
+# ***** There is a proble with this updated version of Flux
+# ***** switch to Lux for the NN
+# the code below is not working
+exit()
+
 
 plot(sqrt.(losses),xguidefontsize=14,yguidefontsize=14 ,dpi = 130, legend=:topright,legendfont=font(15),linewidth = 2)
 xlabel!("Iteration")
