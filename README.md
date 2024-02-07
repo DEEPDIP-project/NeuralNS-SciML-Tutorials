@@ -1,8 +1,8 @@
 # Neural closures using SciML
 
 In this repository, you can see two sets of tutorials about fluid dynamics with NeuralODE and the SciML Julia Library. They are divided according to the problem that they are targeting, in specific:
-* `NS_*` tutorials show how to solve the Incompressible Navier-Stokes equation in the *spectral space*. They are based on Syver's implementation.
-* `Adv_*` tutorials focus on advection problems (including Burgers). They are based on Toby's code.
+* `NS_*` tutorials show how to solve the Incompressible Navier-Stokes equation in the *spectral space*. They are based on [Syver's implementation](https://github.com/DEEPDIP-project/NeuralClosure).
+* `Adv_*` tutorials focus on advection problems (including Burgers). They are based on [Toby's code](https://github.com/DEEPDIP-project/ECNCM_1D).
   
 We will look at the two groups separately, but later we plan to merge them in a single framework.
 
