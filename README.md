@@ -1,10 +1,13 @@
-# Neural closure of Incompressible Navier-Stokes, using SciML
+# Neural closures using SciML
 
-In this repository, you can see tutorials on how to solve the Incompressible Navier-Stokes equation using different neural closures, using Julia language.
-The equation is solved in the *spectral space* using *SciML solvers*.
+In this repository, you can see two sets of tutorials about fluid dynamics with NeuralODE and the SciML Julia Library. They are divided according to the problem that they are targeting, in specific:
+* `NS_*` tutorials show how to solve the Incompressible Navier-Stokes equation in the *spectral space*. They are based on Syver's implementation.
+* `Adv_*` tutorials focus on advection problems (including Burgers). They are based on Toby's code.
+  
+We will look at the two groups separately, but later we plan to merge them in a single framework.
 
-## Details of the tutorials
-* In `NS_SciML_vs_direct.jl` you can see the comparison between different SciML solvers with an explicit Runge-Kutta approach:
+## Navier-Stokes tutorials
+* In `NS_SciML_vs_direct.jl` you can see the comparison between different timestep solvers. In the SciML community it is suggested to use `Tsit5`, but we can use a Runge-Kutta approach to compare with our (Syver) direct implementation:
 
 ![Alt text](plots/NS_SciML_vs_direct.gif)
 
@@ -20,3 +23,12 @@ The equation is solved in the *spectral space* using *SciML solvers*.
   
 ![Alt text](plots/DNS_128_LES_64_nu_0.0005_1234_error.png)
 *(Disclaimer: the models in the figure have been '''trained''' for ~10m of single cpu time)*
+
+
+## Advection tutorials
+
+* In `Adv_SciML_vs_direct.jl` you can see the comparison between different timestep solvers. In the SciML community it is suggested to use `Tsit5`, but we can use a Runge-Kutta approach to compare with our (Toby) direct implementation:
+
+![Alt text](plots/Adv_SciML_vs_direct.gif)
+
+* ...Work in progress...
