@@ -36,7 +36,7 @@ les_size = 64
 dns_size = 128
 #les_size = 32
 #dns_size = 64
-myseed = 1234
+myseed = 777
 data_name = get_data_name(nu, les_size, dns_size, myseed)
 # ***
 # Do you want to plot the solution?
@@ -49,6 +49,17 @@ plotting = true
 params_les = create_params(les_size; nu)
 params_dns = create_params(dns_size; nu)
 Random.seed!(myseed)
+
+
+# Make a 2D Kolmogorov flow 
+# fx = sin(4y) - 0.1 ux
+# fy = -0.1 uy
+# (I have hard coded the *u part)
+params_dns.f = Complex.(params_dns.f)
+params_dns.f[1,:] = (exp.(-im*8*params_dns.x)/2 .-1/2)*im
+params_less.f = Complex.(params_les.f)
+params_less.f[1,:] = (exp.(-im*8*params_les.x)/2 .-1/2)*im
+
 
 ## Initial conditions
 u = random_field(params_dns)

@@ -46,7 +46,7 @@ end
 # includes the closure term (if any).
 function F(u, params)
     q = Q(u, params)
-    du = @. q - params.prefactor_F * u + params.f
+    du = @. q - params.prefactor_F * u - 0.1 * 2.0f0π * im *params.k + params.f
     du
 end
 
